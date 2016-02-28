@@ -9,6 +9,7 @@
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
@@ -19,25 +20,32 @@ import java.util.Date;
 
 public class Server {
 	private static ServerSocket srvSock;
+	// Default Path for My System
+	private static String path = "/Users/Satvik/tyDocuments/workspace/Server/www/";
 	private static String successStatusLine = "HTTP/1.0 200 OK\r\n";
-	private static String serverLine = "Server: Simple/1.0\r\n";
+	private static String serverLine = "Server: Simple/1.0\r\nConnection: Close\r\n";
 	private static String dateHeader = "Date:";
 	private static String contentType = "\r\nContent-Type:";
 	private static String contentLength = "\r\nContent-Length:";
 	private static String endRequest = "\r\n\r\n";
 	private static String notImplementedStatusLine = "HTTP/1.0 501 Not Implemented\r\n";
-	private static String notImplementedHTML = "<!DOCTYPE html><html><body>Not Implemented</body></html>";
 	private static String fileNotFoundStatusLine = "HTTP/1.0 404 Not Found\r\n";
+	private static String internalServerErrorStatusLine = "HTTP/1.0 500 Internal Server Error\r\n";
 	private static String fileNotFoundHTML = "<head><title>Error response</title></head>"
 			+ "<body><h1>Error response</h1><p>Error code 404.<p>Message: Not Found."
 			+ "<p>Error code explanation: 404 = Nothing matches the given URI.</body>";
-
+	private static String notImplementedHTML = "<head><title>Error response</title></head>"
+			+ "<body><h1>Error response</h1><p>Error code 501.<p>Message: Not Implemented."
+			+ "<p>Error code explanation: 501 = Method Not Implemented.</body>";;
+	private static String internalServerErrorHTML = "<head><title>Error response</title></head>"
+			+ "<body><h1>Error response</h1><p>Error code 500.<p>Message: Internal Server Error."
+			+ "<p>Error code explanation: 500 = syscall failure right now/other failures.</body>";
+	
 	public static void main(String args[]) {
 		int port = 8001;
-		
 		/* Parse parameter and do args checking */
-		if (args.length < 1) {
-			System.err.println("Usage: java Server <port_number>");
+		if (args.length < 2) {
+			System.err.println("Usage: java Server <port_number> <Absolute Path to www Directory>");
 			System.exit(1);
 		}
 
@@ -52,7 +60,7 @@ public class Server {
 			System.err.println("Port number must be in between 1024 and 65535");
 			System.exit(1);
 		}
-
+		path = args[1];
 		try {
 			/*
 			 * Create a socket to accept() client connections. This combines
@@ -146,8 +154,14 @@ public class Server {
 					{
 						if(statusLine[1].length()>2)
 						{
-							fileName = statusLine[1].substring(1);
-
+							int len = statusLine[1].length()-1;
+							char z = statusLine[1].charAt(len);
+							// If relative path to folder append index.html to it
+							if(z == '/')
+								fileName = statusLine[1].substring(1)+"index.html";
+							else
+								fileName = statusLine[1].substring(1);
+							
 						}
 						else
 							fileName = "index.html";
@@ -170,12 +184,12 @@ public class Server {
 				FileInputStream fin;
 				StringBuilder s1 = new StringBuilder();
 				try{
-					fin = new FileInputStream("www/"+fileName);
+					fin = new FileInputStream(path+fileName);
 					while((c=fin.read())!=-1){
 						s1.append((char)c);
 					}
 					fin.close();
-				}catch(Exception e)
+				}catch(FileNotFoundException e)
 				{
 					e.printStackTrace();
 					if(statusLine[0].equals("GET"))
@@ -186,6 +200,16 @@ public class Server {
 					outStream.flush();
 					clientSock.close();
 					continue;
+				}catch (Exception e) {
+					e.printStackTrace();
+					if(statusLine[0].equals("GET"))
+						buffer = internalServerErrorStatusLine+serverLine+dateHeader+getDate()+endRequest+internalServerErrorHTML;
+					else if(statusLine[0].equals("HEAD"))
+						buffer = internalServerErrorStatusLine+serverLine+dateHeader+getDate()+endRequest;
+					outStream.writeBytes(buffer);
+					outStream.flush();
+					clientSock.close();
+					continue;				
 				}
 				String filecontents = s1.toString();
 				int fileSize = filecontents.length();
