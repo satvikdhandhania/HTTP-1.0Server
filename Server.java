@@ -13,12 +13,17 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class Server {
 	private static ServerSocket srvSock;
 	private static String successStatusLine = "HTTP/1.0 200 OK\r\n";
 	private static String serverLine = "Server: Simple/1.0\r\n";
-	private static String contentType = "Content-Type:";
+	private static String dateHeader = "Date:";
+	private static String contentType = "\r\nContent-Type:";
+	private static String contentLength = "\r\nContent-Length:";
 	private static String endRequest = "\r\n\r\n";
 	private static String notImplementedStatusLine = "HTTP/1.0 501 Not Implemented\r\n";
 	private static String notImplementedHTML = "<!DOCTYPE html><html><body>Not Implemented</body></html>";
@@ -62,6 +67,12 @@ public class Server {
 		processIncoming();
 		
 	}
+	private static String getDate()
+	{
+		DateFormat dateFormat = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z");	
+		Date date = new Date();
+		return dateFormat.format(date);
+	}
 	static void processIncoming()
 	{
 		String buffer = null;
@@ -69,7 +80,7 @@ public class Server {
 		StringBuilder stringBuilder = new StringBuilder();
 		BufferedReader inStream = null;
 		DataOutputStream outStream = null;
-
+		String statusLine[];
 		Socket clientSock;
 
 		while (true) {
@@ -111,7 +122,6 @@ public class Server {
 				if(brokenRequest.length>1)
 				{
 					boolean flag = false;
-					String statusLine[];
 					statusLine = brokenRequest[0].split(" ");
 					System.out.println(statusLine[0]);
 					if(statusLine[0].equals("GET")||statusLine[0].equals("HEAD"))
@@ -144,7 +154,7 @@ public class Server {
 					}
 					else
 					{
-						buffer = notImplementedStatusLine+serverLine+endRequest+notImplementedHTML;
+						buffer = notImplementedStatusLine+serverLine+dateHeader+getDate()+endRequest+notImplementedHTML;
 						outStream.writeBytes(buffer);
 						outStream.flush();
 						/* Interaction with this client complete, close() the socket */
@@ -160,7 +170,7 @@ public class Server {
 				FileInputStream fin;
 				StringBuilder s1 = new StringBuilder();
 				try{
-					fin = new FileInputStream(fileName);
+					fin = new FileInputStream("www/"+fileName);
 					while((c=fin.read())!=-1){
 						s1.append((char)c);
 					}
@@ -168,14 +178,22 @@ public class Server {
 				}catch(Exception e)
 				{
 					e.printStackTrace();
-					buffer = fileNotFoundStatusLine+serverLine+endRequest+fileNotFoundHTML;
+					if(statusLine[0].equals("GET"))
+						buffer = fileNotFoundStatusLine+serverLine+dateHeader+getDate()+endRequest+fileNotFoundHTML;
+					else if(statusLine[0].equals("HEAD"))
+						buffer = fileNotFoundStatusLine+serverLine+dateHeader+getDate()+endRequest;
 					outStream.writeBytes(buffer);
 					outStream.flush();
 					clientSock.close();
 					continue;
 				}
 				String filecontents = s1.toString();
-				buffer = successStatusLine+serverLine+contentType+GetMime.getMimeType(fileName)+endRequest+filecontents;
+				int fileSize = filecontents.length();
+				if(statusLine[0].equals("GET"))
+					buffer = successStatusLine+serverLine+dateHeader+getDate()+contentType+GetMime.getMimeType(fileName)+contentLength+fileSize+endRequest+filecontents;
+				else if(statusLine[0].equals("HEAD"))
+					buffer = successStatusLine+serverLine+dateHeader+getDate()+contentType+GetMime.getMimeType(fileName)+contentLength+fileSize+endRequest;
+
 				/*
 				 * Echo the data back and flush the stream to make sure that the
 				 * data is sent immediately
