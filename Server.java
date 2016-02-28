@@ -21,16 +21,15 @@ public class Server {
 	private static String contentType = "Content-Type:";
 	private static String endRequest = "\r\n\r\n";
 	private static String notImplementedStatusLine = "HTTP/1.0 501 Not Implemented\r\n";
+	private static String notImplementedHTML = "<!DOCTYPE html><html><body>Not Implemented</body></html>";
+	private static String fileNotFoundStatusLine = "HTTP/1.0 404 Not Found\r\n";
+	private static String fileNotFoundHTML = "<head><title>Error response</title></head>"
+			+ "<body><h1>Error response</h1><p>Error code 404.<p>Message: Not Found."
+			+ "<p>Error code explanation: 404 = Nothing matches the given URI.</body>";
 
 	public static void main(String args[]) {
-		String buffer = null;
-		//String 
-		int port = 8080;
-		int c;
-		StringBuilder stringBuilder = new StringBuilder();
-		BufferedReader inStream = null;
-		DataOutputStream outStream = null;
-
+		int port = 8001;
+		
 		/* Parse parameter and do args checking */
 		if (args.length < 1) {
 			System.err.println("Usage: java Server <port_number>");
@@ -60,9 +59,20 @@ public class Server {
 			System.err.println("Unable to listen on port " + port);
 			System.exit(1);
 		}
+		processIncoming();
+		
+	}
+	static void processIncoming()
+	{
+		String buffer = null;
+		int c;
+		StringBuilder stringBuilder = new StringBuilder();
+		BufferedReader inStream = null;
+		DataOutputStream outStream = null;
+
+		Socket clientSock;
 
 		while (true) {
-			Socket clientSock;
 			try {
 				/*
 				 * Get a sock for further communication with the client. This
@@ -88,29 +98,84 @@ public class Server {
 					if((c = inStream.read())!=-1)
 					{	
 						stringBuilder.append((char)c);
-						buffer = stringBuilder.toString();
 					}
 				}
+				String fileName= null;
 
-				System.out.println("Read from client "
+				buffer = stringBuilder.toString();
+				System.out.print("Read from client "
 						+ clientSock.getInetAddress() + ":"
 						+ clientSock.getPort() + " " + buffer);
+				String brokenRequest[];
+				brokenRequest = buffer.split("\r\n");
+				if(brokenRequest.length>1)
+				{
+					boolean flag = false;
+					String statusLine[];
+					statusLine = brokenRequest[0].split(" ");
+					System.out.println(statusLine[0]);
+					if(statusLine[0].equals("GET")||statusLine[0].equals("HEAD"))
+					{	
+
+
+
+
+						/*
+						 * 
+						 * 
+						 * 
+						 * 
+						 * Change HTTP 1.0
+						 */
+						if(statusLine[2].equals("HTTP/1.1")||statusLine[2].equals("HTTP/1.0"))
+						{
+							flag=true;
+						}
+					}
+					if(flag)
+					{
+						if(statusLine[1].length()>2)
+						{
+							fileName = statusLine[1].substring(1);
+
+						}
+						else
+							fileName = "index.html";
+					}
+					else
+					{
+						buffer = notImplementedStatusLine+serverLine+endRequest+notImplementedHTML;
+						outStream.writeBytes(buffer);
+						outStream.flush();
+						/* Interaction with this client complete, close() the socket */
+						clientSock.close();
+						continue;
+					}
+					System.out.println(fileName);
+				}
+				else
+					continue;
+
 				buffer = null;
-				String fileName= "10.png";
+				FileInputStream fin;
 				StringBuilder s1 = new StringBuilder();
 				try{
-					FileInputStream fin = new FileInputStream(fileName);
+					fin = new FileInputStream(fileName);
 					while((c=fin.read())!=-1){
 						s1.append((char)c);
 					}
+					fin.close();
 				}catch(Exception e)
 				{
 					e.printStackTrace();
+					buffer = fileNotFoundStatusLine+serverLine+endRequest+fileNotFoundHTML;
+					outStream.writeBytes(buffer);
+					outStream.flush();
+					clientSock.close();
 					continue;
 				}
 				String filecontents = s1.toString();
 				buffer = successStatusLine+serverLine+contentType+GetMime.getMimeType(fileName)+endRequest+filecontents;
-
 				/*
 				 * Echo the data back and flush the stream to make sure that the
 				 * data is sent immediately
@@ -126,3 +191,4 @@ public class Server {
 		}
 	}
 }
+
