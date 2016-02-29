@@ -58,11 +58,13 @@ public class Client {
 			try {
 				/* Read data from the user */
 				//buffer = br.readLine();
+				
 				buffer="GET / HTTP/1.0\r\n"
-						+"Host:localhost:8080\r\n"
+						+"Host:localhost:9000\r\n"
 						+"User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:44.0) Gecko/20100101 Firefox/44.0\r\n"
 						+"Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\n"
 						+"Accept-Language: en-US,en;q=0.5\r\nAccept-Encoding: gzip, deflate\r\nConnection: keep-alive\r\n\r\n";
+				
 				//System.out.println(buffer);
 				/*
 				 * connect() to the server at addr:port. The server needs to be
@@ -77,24 +79,23 @@ public class Client {
 			}
 			try {
 				System.out.println(buffer);
-				
+
 				inStream = new BufferedReader(new InputStreamReader(
 						sock.getInputStream()));
 				/* Write the date to the server */
 				outStream = new DataOutputStream(sock.getOutputStream());
-				outStream.writeChars(buffer);
+				outStream.writeBytes(buffer);
 				//outStream.writeChar('\n');
 				outStream.flush();
 				/* Read the data echoed by the server */
 				int c;
 				StringBuilder stringBuilder = new StringBuilder();
-				while(inStream.ready()==true)
-				{				
-					while((c = inStream.read())!=-1)
-					{	
-						stringBuilder.append((char)c);
-					}
+				String line;
+				while((line = inStream.readLine())!=null)
+				{	
+					stringBuilder.append(line);
 				}
+				//String line = stringBuilder.toString();
 				System.out.println("Received : " + stringBuilder.toString());
 				System.out.println("Im here");
 				/* Close the connection and wait for next input */

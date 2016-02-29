@@ -89,7 +89,7 @@ public class Server {
 		BufferedReader inStream = null;
 		DataOutputStream outStream = null;
 		String statusLine[];
-		Socket clientSock;
+		Socket clientSock = null;
 
 		while (true) {
 			try {
@@ -105,6 +105,11 @@ public class Server {
 						+ clientSock.getInetAddress() + ":"
 						+ clientSock.getPort());
 			} catch (IOException e) {
+				try {
+					clientSock.close();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
 				continue;
 			}
 			try {
@@ -112,6 +117,7 @@ public class Server {
 						clientSock.getInputStream()));
 				outStream = new DataOutputStream(clientSock.getOutputStream());
 				/* Read the data send by the client */
+				/*
 				while(inStream.ready()==true)
 				{				
 					if((c = inStream.read())!=-1)
@@ -119,8 +125,21 @@ public class Server {
 						stringBuilder.append((char)c);
 					}
 				}
+				*/
+				String line;
+				while(inStream.ready()==true)
+				{				
+					if((line = inStream.readLine())!=null)
+					{	
+						stringBuilder.append(line);
+						stringBuilder.append("\r\n");
+					}
+				}
+			
+				
 				String fileName= null;
 
+				
 				buffer = stringBuilder.toString();
 				System.out.print("Read from client "
 						+ clientSock.getInetAddress() + ":"
@@ -156,7 +175,8 @@ public class Server {
 						{
 							int len = statusLine[1].length()-1;
 							char z = statusLine[1].charAt(len);
-							// If relative path to folder append index.html to it
+							
+							//If relative path to folder append index.html to it
 							if(z == '/')
 								fileName = statusLine[1].substring(1)+"index.html";
 							else
@@ -227,7 +247,11 @@ public class Server {
 				/* Interaction with this client complete, close() the socket */
 				clientSock.close();
 			} catch (IOException e) {
-				clientSock = null;
+				try {
+					clientSock.close();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
 				continue;
 			}
 		}
