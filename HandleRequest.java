@@ -48,7 +48,7 @@ public class HandleRequest implements Runnable{
 	public void run() {
 		SynchronizedCounter.increment();
 		System.out.println(SynchronizedCounter.getValue());
-		if( SynchronizedCounter.getValue() > Server.THREAD_POOL_SIZE)
+		if( SynchronizedCounter.getValue() > Simple.THREAD_POOL_SIZE)
 		{
 			serverUnavailable();
 			SynchronizedCounter.decrement();
