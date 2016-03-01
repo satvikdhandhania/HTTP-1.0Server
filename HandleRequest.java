@@ -8,7 +8,9 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.Map;
 
 public class HandleRequest implements Runnable{
 
@@ -48,7 +50,7 @@ public class HandleRequest implements Runnable{
 	public void run() {
 		SynchronizedCounter.increment();
 		System.out.println(SynchronizedCounter.getValue());
-		if( SynchronizedCounter.getValue() > Simple.THREAD_POOL_SIZE)
+		if( SynchronizedCounter.getValue() > 50)
 		{
 			serverUnavailable();
 			SynchronizedCounter.decrement();
@@ -123,6 +125,42 @@ public class HandleRequest implements Runnable{
 				{
 					if(statusLine[1].length()>2)
 					{
+						if(statusLine[1].contains("cgi-bin"))
+						{
+							System.out.println("Contains CGI-BIN");
+							ArrayList<String> list = new ArrayList<String>();
+							System.out.println("HERE:"+path+statusLine[1].substring(1));
+							list.add(path+statusLine[1].substring(1));
+							
+							ProcessBuilder pb = new ProcessBuilder(list);
+							 System.out.println(""+pb.command());
+							  Map<String, String> environ = pb.environment();
+
+							    Process process = null;
+								try {
+									process = pb.start();
+								} catch (IOException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+							    InputStream is = process.getInputStream();
+							    InputStreamReader isr = new InputStreamReader(is);
+							    BufferedReader br = new BufferedReader(isr);
+							    String line2;
+							    try {
+									while ((line2 = br.readLine()) != null) {
+									  System.out.println(line2);
+									}
+								} catch (IOException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+							    System.out.println("Program terminated!");
+
+							
+							clientSock.close();
+							return;
+						}
 						int len = statusLine[1].length()-1;
 						char z = statusLine[1].charAt(len);
 
@@ -131,7 +169,6 @@ public class HandleRequest implements Runnable{
 							fileName = statusLine[1].substring(1)+"index.html";
 						else
 							fileName = statusLine[1].substring(1);
-
 					}
 					else
 						fileName = "index.html";

@@ -25,7 +25,7 @@ public class Simple {
 	private static ServerSocket srvSock;
 	// Default Path for My System
 	private static String path = null;
-	public static final int THREAD_POOL_SIZE = 25;
+	public static final int THREAD_POOL_SIZE = 100;
 	
 	public static void main(String args[]) {
 		int port = 8001;

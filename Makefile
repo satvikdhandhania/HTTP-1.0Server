@@ -6,7 +6,7 @@ JC = javac
 
 CLASSES = \
 	GetMime.java \
-	Server.java \
+	Simple.java \
 	Client.java \
 	HandleRequest.java
 
