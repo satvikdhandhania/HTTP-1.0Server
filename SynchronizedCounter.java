@@ -1,3 +1,12 @@
+/**
+ * @file: SynchronizedCounter.java
+ * 
+ * @author: Satvik Dhandhania <sdhandha@andrew.cmu.edu>
+ * 			Gobinath Iyyanan Vellaiappan <giyyanan@andrew.cmu.edu> 
+ * 
+ * @date: Mar 1, 2016 1:13:37 AM EST
+ * 
+ */
 
 public class SynchronizedCounter {
 	

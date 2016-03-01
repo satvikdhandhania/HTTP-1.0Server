@@ -8,6 +8,7 @@ CLASSES = \
 	GetMime.java \
 	Simple.java \
 	Client.java \
+	TestSuite.java \
 	HandleRequest.java
 
 default: classes

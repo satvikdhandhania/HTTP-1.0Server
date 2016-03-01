@@ -1,9 +1,10 @@
 /**
  * @file: Simple.java
  * 
- * @author: Chinmay Kamat <chinmaykamat@cmu.edu>
+ * @author: Satvik Dhandhania <sdhandha@andrew.cmu.edu>
+ * 			Gobinath Iyyanan Vellaiappan <giyyanan@andrew.cmu.edu> 
  * 
- * @date: Feb 15, 2013 1:13:37 AM EST
+ * @date: Mar 1, 2016 1:13:37 AM EST
  * 
  */
 
@@ -17,7 +18,7 @@ import java.util.concurrent.Executors;
 public class Simple {
 	private static ServerSocket srvSock;
 	private static String path = null;
-	public static final int THREAD_POOL_SIZE = 100;
+	public static final int THREAD_POOL_SIZE = 30;
 	
 	public static void main(String args[]) {
 		int port = 8001;

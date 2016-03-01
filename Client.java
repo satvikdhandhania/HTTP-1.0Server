@@ -1,9 +1,10 @@
 /**
  * @file: Client.java
  * 
- * @author: Chinmay Kamat <chinmaykamat@cmu.edu>
+ * @author: Satvik Dhandhania <sdhandha@andrew.cmu.edu>
+ * 			Gobinath Iyyanan Vellaiappan <giyyanan@andrew.cmu.edu> 
  * 
- * @date: Feb 15, 2013 1:14:09 AM EST
+ * @date: Mar 1, 2016 1:13:37 AM EST
  * 
  */
 
@@ -24,7 +25,7 @@ public class Client {
 		DataOutputStream outStream = null;
 		String buffer = null;
 
-		
+
 		/* Parse parameter and do args checking */
 		if (args.length < 2) {
 			System.err.println("Usage: java Client <server_ip> <server_port>");
@@ -46,7 +47,6 @@ public class Client {
 		try {
 			/* Get the server adder in InetAddr format */
 			addr = InetAddress.getByName(args[0]);
-			//System.out.println(addr);
 		} catch (UnknownHostException e) {
 			System.err.println("Invalid address provided for server");
 			System.exit(1);
@@ -56,8 +56,7 @@ public class Client {
 		{
 			try {
 				/* Read data from the user */
-				//buffer = br.readLine();
-
+				// Hardcoded Request
 				buffer="GET /index.html HTTP/1.0\r\n"
 						+"Host:localhost:9001\r\n"
 						+"User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:44.0) Gecko/20100101 Firefox/44.0\r\n"
@@ -75,7 +74,7 @@ public class Client {
 				continue;
 			}
 			try {
-				
+
 				inStream = new BufferedReader(new InputStreamReader(
 						sock.getInputStream()));
 				/* Write the date to the server */
@@ -86,13 +85,10 @@ public class Client {
 				/* Read the data echoed by the server */
 				StringBuilder stringBuilder = new StringBuilder();
 				String line;
-				//while(inStream.ready()==true)
-				{				
-					while((line = inStream.readLine())!=null)
-					{	
-						stringBuilder.append(line);
-						stringBuilder.append("\r\n");
-					}
+				while((line = inStream.readLine())!=null)
+				{	
+					stringBuilder.append(line);
+					stringBuilder.append("\r\n");
 				}
 				System.out.println("Received : " + stringBuilder.toString());
 				/* Close the connection and wait for next input */

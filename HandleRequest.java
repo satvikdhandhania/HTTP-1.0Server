@@ -1,3 +1,14 @@
+/**
+ * @file: HandleRequest.java
+ * 
+ * @author: Satvik Dhandhania <sdhandha@andrew.cmu.edu>
+ * 			Gobinath Iyyanan Vellaiappan <giyyanan@andrew.cmu.edu> 
+ * 
+ * @date: Mar 1, 2016 1:13:37 AM EST
+ * 
+ */
+
+
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.FileInputStream;
@@ -10,14 +21,13 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Map;
 
 public class HandleRequest implements Runnable{
 
 	private Socket clientSock;
 	private String path;
 
-	private static int MAX_ALIVE_THREADS = 80;
+	private static int MAX_ALIVE_THREADS = 20;
 	private static String successStatusLine = "HTTP/1.0 200 OK\r\n";
 	private static String serverLine = "Server: Simple/1.0\r\nConnection: Close\r\n";
 	private static String dateHeader = "Date:";
@@ -115,7 +125,7 @@ public class HandleRequest implements Runnable{
 					 * 
 					 * Change HTTP 1.0
 					 */
-					if(statusLine[2].equals("HTTP/1.1")||statusLine[2].equals("HTTP/1.0"))
+					if(statusLine[2].equals("HTTP/1.0"))
 					{
 						flag=true;
 					}
