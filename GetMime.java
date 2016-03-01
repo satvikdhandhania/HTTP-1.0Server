@@ -13,13 +13,20 @@ import java.net.URLConnection;
 public class GetMime {
 
 	/* Function which gets the MIME string and returns it */
-	public static String getMimeType(String fileUrl) throws java.io.IOException {
+	public static String getMimeType(String fileUrl){
 		FileNameMap fileNameMap = URLConnection.getFileNameMap();
-		String type = fileNameMap.getContentTypeFor(fileUrl);
+		String type = fileNameMap.getContentTypeFor(fileUrl);	
+		/*
+		if(type==null)
+		{	
+			System.out.println("Type:"+type+":");
+			type = "application/octet-stream";
+		}
+		*/
 		return type;
 	}
 
-	public static void main(String args[]) throws Exception {
+	public static void main(String args[]){
 		/* Parse parameter and do args checking */
 		if (args.length < 1) {
 			System.err.println("Usage: java GetMime <filename>");

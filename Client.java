@@ -47,24 +47,24 @@ public class Client {
 		try {
 			/* Get the server adder in InetAddr format */
 			addr = InetAddress.getByName(args[0]);
-			System.out.println(addr);
+			//System.out.println(addr);
 		} catch (UnknownHostException e) {
 			System.err.println("Invalid address provided for server");
 			System.exit(1);
 		}
 
-		//while (true) 
+		while (true) 
 		{
 			try {
 				/* Read data from the user */
 				//buffer = br.readLine();
-				
-				buffer="GET / HTTP/1.0\r\n"
-						+"Host:localhost:9000\r\n"
+
+				buffer="GET /index.html HTTP/1.0\r\n"
+						+"Host:localhost:9001\r\n"
 						+"User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:44.0) Gecko/20100101 Firefox/44.0\r\n"
 						+"Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\n"
 						+"Accept-Language: en-US,en;q=0.5\r\nAccept-Encoding: gzip, deflate\r\nConnection: keep-alive\r\n\r\n";
-				
+
 				//System.out.println(buffer);
 				/*
 				 * connect() to the server at addr:port. The server needs to be
@@ -72,13 +72,13 @@ public class Client {
 				 * the SYN-SYN/ACK-ACK handshake
 				 */
 				sock = new Socket(addr, port);
-				System.out.println(sock);
+				//System.out.println(sock);
 			} catch (IOException e) {
 				System.err.println("Unable to reach server");
 				//continue;
 			}
 			try {
-				System.out.println(buffer);
+				//System.out.println(buffer);
 
 				inStream = new BufferedReader(new InputStreamReader(
 						sock.getInputStream()));
@@ -88,16 +88,17 @@ public class Client {
 				//outStream.writeChar('\n');
 				outStream.flush();
 				/* Read the data echoed by the server */
-				int c;
 				StringBuilder stringBuilder = new StringBuilder();
 				String line;
-				while((line = inStream.readLine())!=null)
-				{	
-					stringBuilder.append(line);
+				//while(inStream.ready()==true)
+				{				
+					while((line = inStream.readLine())!=null)
+					{	
+						stringBuilder.append(line);
+						stringBuilder.append("\r\n");
+					}
 				}
-				//String line = stringBuilder.toString();
 				System.out.println("Received : " + stringBuilder.toString());
-				System.out.println("Im here");
 				/* Close the connection and wait for next input */
 				sock.close();
 			} catch (IOException e) {
