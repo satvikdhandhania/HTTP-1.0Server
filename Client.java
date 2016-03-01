@@ -24,8 +24,7 @@ public class Client {
 		DataOutputStream outStream = null;
 		String buffer = null;
 
-		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-
+		
 		/* Parse parameter and do args checking */
 		if (args.length < 2) {
 			System.err.println("Usage: java Client <server_ip> <server_port>");
@@ -65,21 +64,18 @@ public class Client {
 						+"Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\n"
 						+"Accept-Language: en-US,en;q=0.5\r\nAccept-Encoding: gzip, deflate\r\nConnection: keep-alive\r\n\r\n";
 
-				//System.out.println(buffer);
 				/*
 				 * connect() to the server at addr:port. The server needs to be
 				 * listen() in order for this to succeed. This call initiates
 				 * the SYN-SYN/ACK-ACK handshake
 				 */
 				sock = new Socket(addr, port);
-				//System.out.println(sock);
-			} catch (IOException e) {
+			} catch (Exception e) {
 				System.err.println("Unable to reach server");
-				//continue;
+				continue;
 			}
 			try {
-				//System.out.println(buffer);
-
+				
 				inStream = new BufferedReader(new InputStreamReader(
 						sock.getInputStream()));
 				/* Write the date to the server */
@@ -102,7 +98,7 @@ public class Client {
 				/* Close the connection and wait for next input */
 				sock.close();
 			} catch (IOException e) {
-				//continue;
+				continue;
 			}
 		}
 	}

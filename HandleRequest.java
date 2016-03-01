@@ -15,8 +15,9 @@ import java.util.Map;
 public class HandleRequest implements Runnable{
 
 	private Socket clientSock;
-	private static String path;
+	private String path;
 
+	private static int MAX_ALIVE_THREADS = 80;
 	private static String successStatusLine = "HTTP/1.0 200 OK\r\n";
 	private static String serverLine = "Server: Simple/1.0\r\nConnection: Close\r\n";
 	private static String dateHeader = "Date:";
@@ -25,6 +26,7 @@ public class HandleRequest implements Runnable{
 	private static String endRequest = "\r\n\r\n";
 	private static String notImplementedStatusLine = "HTTP/1.0 501 Not Implemented\r\n";
 	private static String fileNotFoundStatusLine = "HTTP/1.0 404 Not Found\r\n";
+	private static String badRequestStatusLine = "HTTP/1.0 400 bad Request\r\n";
 	private static String serverUnavailableStatusLine = "HTTP/1.0 503 Service Unavailable\r\n";
 	private static String internalServerErrorStatusLine = "HTTP/1.0 500 Internal Server Error\r\n";
 	private static String fileNotFoundHTML = "<head><title>Error response</title></head>"
@@ -39,6 +41,9 @@ public class HandleRequest implements Runnable{
 	private static String serverUnavailableErrorHTML = "<head><title>Error response</title></head>"
 			+ "<body><h1>Error response</h1><p>Error code 503.<p>Message: Server Unavailable."
 			+ "<p>Error code explanation: 503 = Server Busy.</body>";
+	private static String badRequestErrorHTML = "<head><title>Error response</title></head>"
+			+ "<body><h1>Error response</h1><p>Error code 400.<p>Message: Bad Request."
+			+ "<p>Error code explanation: 400 = Bad Request.</body>";
 
 	public HandleRequest(Socket clientSock, String path) {
 		super();
@@ -49,8 +54,10 @@ public class HandleRequest implements Runnable{
 	@Override
 	public void run() {
 		SynchronizedCounter.increment();
-		System.out.println(SynchronizedCounter.getValue());
-		if( SynchronizedCounter.getValue() > 50)
+		// Thread Count
+		//System.out.println(SynchronizedCounter.getValue());
+		// Allowing only 80 threads to process requests at any time
+		if( SynchronizedCounter.getValue() > MAX_ALIVE_THREADS)
 		{
 			serverUnavailable();
 			SynchronizedCounter.decrement();
@@ -88,27 +95,19 @@ public class HandleRequest implements Runnable{
 				}
 			}
 
-
 			String fileName= null;
-
-
 			buffer = stringBuilder.toString();
-//			System.out.print("Read from client "
-//					+ clientSock.getInetAddress() + ":"
-//					+ clientSock.getPort() + "\n" + buffer);
+						System.out.print("\nRead from client "
+								+ clientSock.getInetAddress() + ":"
+								+ clientSock.getPort() + "\n" + buffer);
 			String brokenRequest[];
 			brokenRequest = buffer.split("\r\n");
 			if(brokenRequest.length>1)
 			{
 				boolean flag = false;
 				statusLine = brokenRequest[0].split(" ");
-				//System.out.println(statusLine[0]);
 				if(statusLine[0].equals("GET")||statusLine[0].equals("HEAD"))
 				{	
-
-
-
-
 					/*
 					 * 
 					 * 
@@ -129,36 +128,52 @@ public class HandleRequest implements Runnable{
 						{
 							System.out.println("Contains CGI-BIN");
 							ArrayList<String> list = new ArrayList<String>();
-							System.out.println("HERE:"+path+statusLine[1].substring(1));
-							list.add(path+statusLine[1].substring(1));
-							
+							String commands[];
+							if(statusLine[1].substring(1).contains("?"))
+							{
+								commands = statusLine[1].substring(1).split("\\?");
+								list.add(path+commands[0]);
+								String parameters[] = commands[1].split("&");
+								for(int i=0;i<parameters.length;i++)
+								{
+									String nameValue[] = parameters[i].split("=");
+									list.add(nameValue[1]);
+									System.out.println(nameValue[1]);
+								}
+							}
+							else
+							{
+								list.add(path+statusLine[1].substring(1));
+							}	
+
 							ProcessBuilder pb = new ProcessBuilder(list);
-							 System.out.println(""+pb.command());
-							  Map<String, String> environ = pb.environment();
-
-							    Process process = null;
-								try {
-									process = pb.start();
-								} catch (IOException e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
+							System.out.println(""+pb.command());
+							Process process = null;
+							try {
+								process = pb.start();
+								InputStream is = process.getInputStream();
+								InputStreamReader isr = new InputStreamReader(is);
+								BufferedReader br = new BufferedReader(isr);
+								String l;
+								StringBuilder sb = new StringBuilder();
+								while ((l = br.readLine()) != null) {
+									System.out.println(l);
+									sb.append(l);
 								}
-							    InputStream is = process.getInputStream();
-							    InputStreamReader isr = new InputStreamReader(is);
-							    BufferedReader br = new BufferedReader(isr);
-							    String line2;
-							    try {
-									while ((line2 = br.readLine()) != null) {
-									  System.out.println(line2);
-									}
-								} catch (IOException e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
-							    System.out.println("Program terminated!");
-
+								buffer = successStatusLine+serverLine+dateHeader+getDate()+endRequest+sb.toString();
+								outStream.writeBytes(buffer);
+								outStream.flush();
+								clientSock.close();
+							} catch (IOException e) {
+								buffer = badRequestStatusLine+serverLine+dateHeader+getDate()+endRequest+badRequestErrorHTML;
+								outStream.writeBytes(buffer);
+								outStream.flush();
+								clientSock.close();
+								e.printStackTrace();
+							}		
 							
-							clientSock.close();
+							System.out.println("Program terminated!");
+						
 							return;
 						}
 						int len = statusLine[1].length()-1;
@@ -182,8 +197,7 @@ public class HandleRequest implements Runnable{
 					clientSock.close();
 					return;
 				}
-				//System.out.println(fileName);
-			}
+						}
 			else
 			{
 				clientSock.close();
@@ -225,14 +239,9 @@ public class HandleRequest implements Runnable{
 			if(statusLine[0].equals("GET"))
 			{
 				buffer = successStatusLine+serverLine+dateHeader+getDate()+contentType+GetMime.getMimeType(fileName)+contentLength+fileSize+endRequest+filecontents;
-				//System.out.println(buffer);
 			}else if(statusLine[0].equals("HEAD"))
 				buffer = successStatusLine+serverLine+dateHeader+getDate()+contentType+GetMime.getMimeType(fileName)+contentLength+fileSize+endRequest;
 
-			/*
-			 * Echo the data back and flush the stream to make sure that the
-			 * data is sent immediately
-			 */
 			outStream.writeBytes(buffer);
 			outStream.flush();
 			/* Interaction with this client complete, close() the socket */
@@ -256,12 +265,11 @@ public class HandleRequest implements Runnable{
 	private void serverUnavailable()
 	{
 		String buffer;
-		//System.out.println("\ngckfjgncrkbmcthny\ncnhnynyny\nncnycnynytgvg\nService undfksgbfksdjnfsjhbdcnkxjdsnx cmnsdxdsvcs");
 		
 		DataOutputStream outStream;
 		try {
 			outStream = new DataOutputStream(clientSock.getOutputStream());
-			buffer = serverUnavailableStatusLine+serverLine+dateHeader+getDate()+endRequest;//+serverUnavailableErrorHTML;
+			buffer = serverUnavailableStatusLine+serverLine+dateHeader+getDate()+endRequest+serverUnavailableErrorHTML;
 			outStream.writeBytes(buffer);
 			outStream.flush();
 			/* Interaction with this client complete, close() the socket */
@@ -271,22 +279,4 @@ public class HandleRequest implements Runnable{
 		}
 
 	}
-
-	/*
-			private static String handleCGI(String path)
-			{
-				Process process = new ProcessBuilder(
-						path,"param1","param2").start();
-				InputStream is = process.getInputStream();
-				InputStreamReader isr = new InputStreamReader(is);
-				BufferedReader br = new BufferedReader(isr);
-				String line;
-
-				//System.out.printf("Output of running %s is:", Arrays.toString(args));
-
-				while ((line = br.readLine()) != null) {
-					System.out.println(line);
-				}
-			}
-	 */
 }

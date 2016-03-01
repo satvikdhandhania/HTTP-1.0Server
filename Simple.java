@@ -1,29 +1,21 @@
 /**
- * @file: Server.java
+ * @file: Simple.java
  * 
  * @author: Chinmay Kamat <chinmaykamat@cmu.edu>
  * 
  * @date: Feb 15, 2013 1:13:37 AM EST
  * 
  */
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 
 public class Simple {
 	private static ServerSocket srvSock;
-	// Default Path for My System
 	private static String path = null;
 	public static final int THREAD_POOL_SIZE = 100;
 	
@@ -68,14 +60,12 @@ public class Simple {
 		while (true) {
 			try {
 				clientSock = srvSock.accept();
-//				System.out.println("Accpeted new connection from "
-//						+ clientSock.getInetAddress() + ":"
-//						+ clientSock.getPort());
+				System.out.println("Accpeted new connection from "
+						+ clientSock.getInetAddress() + ":"
+						+ clientSock.getPort());
 				Runnable requestHandler = new HandleRequest(clientSock, path);
 				executorService.execute(requestHandler);
 		
-//				Thread t1 = new Thread(new HandleRequest(clientSock, path));
-//				t1.start();
 				
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
